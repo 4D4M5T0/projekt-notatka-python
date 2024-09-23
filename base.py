@@ -3,13 +3,12 @@ from mysql.connector import Error
 
 
 class Database:
-    def __init__(self, host, user, password, database, port):
+    def __init__(self, host, user, password, database):
         try:
-            connect = mysql.connector.connect(host=host, user=user, password=password, port=port)
-            self.conn = connect
+            self.conn = mysql.connector.connect(host=host, user=user, password=password)
             self.cursor = self.conn.cursor()
 
-            self.cursor.execute(f"create database if not exists {database}")
+            self.cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database}")
             self.conn.commit()
 
             self.conn.database = database
@@ -23,20 +22,20 @@ class Database:
     def create_tables(self):
         try:
             self.cursor.execute("""
-                create table if not exists uzytkownik (
-                    id int auto_increment primary key,
-                    login varchar(255) unique not null,
-                    pass varchar(255) not null
+                CREATE TABLE IF NOT EXISTS uzytkownik (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    login VARCHAR(255) UNIQUE NOT NULL,
+                    pass VARCHAR(255) NOT NULL
                 )
             """)
 
             self.cursor.execute("""
-                create table if not exists notatka (
-                    id int auto_increment primary key,
-                    zawartosc text not null,
-                    user_id int,
-                    foreign key (user_id) references uzytkownik(id) on delete cascade,
-                    time timestamp not null default current_timestamp
+                CREATE TABLE IF NOT EXISTS notatka (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    tresc TEXT NOT NULL,
+                    user_id INT,
+                    FOREIGN KEY (user_id) REFERENCES uzytkownik(id) ON DELETE CASCADE,
+                    time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
             """)
 
@@ -47,14 +46,14 @@ class Database:
             self.conn = None
 
     def sprawdzanie(self, login, password):
-        query = "select * from uzytkownik where login = %s and password = %s"
+        query = "SELECT * FROM uzytkownik WHERE login = %s AND pass = %s"
         self.cursor.execute(query, (login, password))
         user = self.cursor.fetchone()
         return user
 
     def wpisz_uzytkownika(self, login, password):
         try:
-            query = "insert into uzytkownik (login, password) values (%s, %s)"
+            query = "INSERT INTO uzytkownik (login, pass) VALUES (%s, %s)"
             self.cursor.execute(query, (login, password))
             self.conn.commit()
         except mysql.connector.IntegrityError:
@@ -62,24 +61,24 @@ class Database:
         return True
 
     def get_uzytkownik_id(self, login):
-        query = "select id from uzytkownik where login = %s"
+        query = "SELECT id FROM uzytkownik WHERE login = %s"
         self.cursor.execute(query, (login,))
         user_id = self.cursor.fetchone()
         return user_id[0] if user_id else None
 
     def wypisz_notatki_uzytkownika(self, user_id):
-        query = "select * from notatka where user_id = %s"
+        query = "SELECT * FROM notatka WHERE user_id = %s"
         self.cursor.execute(query, (user_id,))
         notatki = self.cursor.fetchall()
         return notatki
 
-    def wpisz_notatka(self, tresc, user_id):
-        query = "insert into notatka (tresc, user_id) values (%s, %s)"
-        self.cursor.execute(query, (tresc, user_id))
+    def wpisz_notatka(self, zawartosc, user_id):
+        query = "INSERT INTO notatka (zawartosc, user_id) VALUES (%s, %s)"
+        self.cursor.execute(query, (zawartosc, user_id))
         self.conn.commit()
 
     def usun_notatka(self, notatka_id):
-        query = "delete from notatka where id = %s"
+        query = "DELETE FROM notatka WHERE id = %s"
         self.cursor.execute(query, (notatka_id,))
         self.conn.commit()
 
