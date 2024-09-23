@@ -25,18 +25,18 @@ class Database:
             self.cursor.execute("""
                 create table if not exists uzytkownik (
                     id int auto_increment primary key,
-                    login VARCHAR(255) UNIQUE NOT NULL,
-                    pass VARCHAR(255) NOT NULL
+                    login varchar(255) unique not null,
+                    pass varchar(255) not null
                 )
             """)
 
             self.cursor.execute("""
                 create table if not exists notatka (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    zawartosc TEXT NOT NULL,
-                    user_id INT,
-                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                    time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    id int auto_increment primary key,
+                    zawartosc text not null,
+                    user_id int,
+                    foreign key (user_id) references uzytkownik(id) on delete cascade,
+                    time timestamp not null default current_timestamp
                 )
             """)
 
@@ -46,40 +46,40 @@ class Database:
             print(f"Błąd przy utworzeniu tabel: {e}")
             self.conn = None
 
-    def check_user(self, login, password):
-        query = "select * from users where login = %s and password = %s"
+    def sprawdzanie(self, login, password):
+        query = "select * from uzytkownik where login = %s and password = %s"
         self.cursor.execute(query, (login, password))
         user = self.cursor.fetchone()
         return user
 
-    def insert_user(self, login, password):
+    def wpisz_uzytkownika(self, login, password):
         try:
-            query = "INSERT INTO users (login, password) VALUES (%s, %s)"
+            query = "insert into uzytkownik (login, password) values (%s, %s)"
             self.cursor.execute(query, (login, password))
             self.conn.commit()
         except mysql.connector.IntegrityError:
             return False
         return True
 
-    def get_user_id(self, login):
-        query = "SELECT id FROM users WHERE login = %s"
+    def get_uzytkownik_id(self, login):
+        query = "select id from uzytkownik where login = %s"
         self.cursor.execute(query, (login,))
         user_id = self.cursor.fetchone()
         return user_id[0] if user_id else None
 
-    def select_notatki_by_user(self, user_id):
-        query = "SELECT * FROM notatki WHERE user_id = %s"
+    def wypisz_notatki_uzytkownika(self, user_id):
+        query = "select * from notatka where user_id = %s"
         self.cursor.execute(query, (user_id,))
         notatki = self.cursor.fetchall()
         return notatki
 
-    def insert_notatka(self, tresc, user_id):
-        query = "INSERT INTO notatki (tresc, user_id) VALUES (%s, %s)"
+    def wpisz_notatka(self, tresc, user_id):
+        query = "insert into notatka (tresc, user_id) values (%s, %s)"
         self.cursor.execute(query, (tresc, user_id))
         self.conn.commit()
 
-    def delete_notatka(self, notatka_id):
-        query = "DELETE FROM notatki WHERE id = %s"
+    def usun_notatka(self, notatka_id):
+        query = "delete from notatka where id = %s"
         self.cursor.execute(query, (notatka_id,))
         self.conn.commit()
 
