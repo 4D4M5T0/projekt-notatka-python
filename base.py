@@ -1,141 +1,88 @@
 import mysql.connector
-import bcrypt
+from mysql.connector import Error
 
 
-# Funkcja do połączenia z bazą danych
-def connect_to_db():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",  # Twój użytkownik MySQL
-        password="",  # Hasło do MySQL
-        database="notes_app"
-    )
+class Database:
+    def __init__(self, host, user, password, database, port):
+        try:
+            connect = mysql.connector.connect(host=host, user=user, password=password, port=port)
+            self.conn = connect
+            self.cursor = self.conn.cursor()
 
+            self.cursor.execute(f"create database if not exists {database}")
+            self.conn.commit()
 
-# Rejestracja użytkownika
-def register_user(login, password):
-    db = connect_to_db()
-    cursor = db.cursor()
+            self.conn.database = database
 
-    # Sprawdzanie czy login już istnieje
-    cursor.execute("SELECT * FROM user WHERE login = %s", (login,))
-    if cursor.fetchone():
-        print("Użytkownik o podanym loginie już istnieje.")
-        return
+            self.create_tables()
 
-    # Haszowanie hasła
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        except Error as e:
+            print(f"Błąd przy utworzeniu bazy lub połączeniu: {e}")
+            self.conn = None
 
-    # Wstawianie nowego użytkownika do bazy danych
-    cursor.execute("INSERT INTO user (login, password) VALUES (%s, %s)", (login, hashed_password))
-    db.commit()
-    print("Rejestracja zakończona sukcesem.")
-    db.close()
+    def create_tables(self):
+        try:
+            self.cursor.execute("""
+                create table if not exists uzytkownik (
+                    id int auto_increment primary key,
+                    login VARCHAR(255) UNIQUE NOT NULL,
+                    pass VARCHAR(255) NOT NULL
+                )
+            """)
 
+            self.cursor.execute("""
+                create table if not exists notatka (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    zawartosc TEXT NOT NULL,
+                    user_id INT,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
 
-# Logowanie użytkownika
-def login_user(login, password):
-    db = connect_to_db()
-    cursor = db.cursor()
+            self.conn.commit()
 
-    # Pobieranie użytkownika na podstawie loginu
-    cursor.execute("SELECT * FROM user WHERE login = %s", (login,))
-    user = cursor.fetchone()
+        except Error as e:
+            print(f"Błąd przy utworzeniu tabel: {e}")
+            self.conn = None
 
-    if user:
-        # Sprawdzanie hasła
-        user_id, _, hashed_password = user
-        if bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
-            print("Logowanie zakończone sukcesem.")
-            db.close()
-            return user_id
-        else:
-            print("Błędne hasło.")
-    else:
-        print("Nie znaleziono użytkownika.")
+    def check_user(self, login, password):
+        query = "select * from users where login = %s and password = %s"
+        self.cursor.execute(query, (login, password))
+        user = self.cursor.fetchone()
+        return user
 
-    db.close()
-    return None
+    def insert_user(self, login, password):
+        try:
+            query = "INSERT INTO users (login, password) VALUES (%s, %s)"
+            self.cursor.execute(query, (login, password))
+            self.conn.commit()
+        except mysql.connector.IntegrityError:
+            return False
+        return True
 
+    def get_user_id(self, login):
+        query = "SELECT id FROM users WHERE login = %s"
+        self.cursor.execute(query, (login,))
+        user_id = self.cursor.fetchone()
+        return user_id[0] if user_id else None
 
-# Wyświetlanie notatek dla zalogowanego użytkownika
-def show_notes(user_id):
-    db = connect_to_db()
-    cursor = db.cursor()
+    def select_notatki_by_user(self, user_id):
+        query = "SELECT * FROM notatki WHERE user_id = %s"
+        self.cursor.execute(query, (user_id,))
+        notatki = self.cursor.fetchall()
+        return notatki
 
-    cursor.execute("SELECT * FROM notatka WHERE user_id = %s", (user_id,))
-    notes = cursor.fetchall()
+    def insert_notatka(self, tresc, user_id):
+        query = "INSERT INTO notatki (tresc, user_id) VALUES (%s, %s)"
+        self.cursor.execute(query, (tresc, user_id))
+        self.conn.commit()
 
-    if notes:
-        for note in notes:
-            print(f"ID: {note[0]}, Timestamp: {note[1]}, Text: {note[2]}")
-    else:
-        print("Brak notatek.")
+    def delete_notatka(self, notatka_id):
+        query = "DELETE FROM notatki WHERE id = %s"
+        self.cursor.execute(query, (notatka_id,))
+        self.conn.commit()
 
-    db.close()
-
-
-# Dodawanie nowej notatki
-def add_note(user_id, text):
-    db = connect_to_db()
-    cursor = db.cursor()
-
-    cursor.execute("INSERT INTO notatka (text, user_id) VALUES (%s, %s)", (text, user_id))
-    db.commit()
-    print("Dodano nową notatkę.")
-
-    db.close()
-
-
-# Usuwanie notatki
-def delete_note(note_id, user_id):
-    db = connect_to_db()
-    cursor = db.cursor()
-
-    cursor.execute("DELETE FROM notatka WHERE id = %s AND user_id = %s", (note_id, user_id))
-    db.commit()
-
-    if cursor.rowcount > 0:
-        print("Notatka została usunięta.")
-    else:
-        print("Nie znaleziono notatki do usunięcia.")
-
-    db.close()
-
-
-# Edycja notatki
-def edit_note(note_id, user_id, new_text):
-    db = connect_to_db()
-    cursor = db.cursor()
-
-    cursor.execute("UPDATE notatka SET text = %s WHERE id = %s AND user_id = %s", (new_text, note_id, user_id))
-    db.commit()
-
-    if cursor.rowcount > 0:
-        print("Notatka została zaktualizowana.")
-    else:
-        print("Nie znaleziono notatki do edycji.")
-
-    db.close()
-
-
-# Przykład użycia:
-if __name__ == "__main__":
-    # Rejestracja nowego użytkownika
-    register_user("user1", "password123")
-
-    # Logowanie
-    user_id = login_user("user1", "password123")
-
-    if user_id:
-        # Dodawanie notatki
-        add_note(user_id, "Moja pierwsza notatka.")
-
-        # Wyświetlanie notatek
-        show_notes(user_id)
-
-        # Edytowanie notatki
-        edit_note(1, user_id, "Zaktualizowana notatka")
-
-        # Usuwanie notatki
-        delete_note(1, user_id)
+    def close(self):
+        if self.conn:
+            self.conn.close()
