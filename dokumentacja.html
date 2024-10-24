@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokumentacja aplikacji Notatnik</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 20px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        code {
+            background-color: #e6e6e6;
+            padding: 3px;
+            border-radius: 3px;
+        }
+        pre {
+            background-color: #e6e6e6;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dokumentacja aplikacji Notatnik</h1>
+
+    <div class="section">
+        <h2>Opis aplikacji</h2>
+        <p>Aplikacja <strong>Notatnik</strong> to desktopowa aplikacja napisana w Pythonie, która umożliwia użytkownikom rejestrację, logowanie, tworzenie oraz zarządzanie notatkami. Aplikacja wykorzystuje bazę danych MySQL do przechowywania danych użytkowników oraz ich notatek. Aplikacja działa w oparciu o interfejs graficzny stworzony przy użyciu biblioteki <code>Tkinter</code>.</p>
+    </div>
+
+    <div class="section">
+        <h2>Struktura plików</h2>
+        <p>Aplikacja składa się z dwóch głównych plików:</p>
+        <ul>
+            <li><strong>main.py</strong> – plik główny, zawiera logikę interfejsu użytkownika oraz funkcje do obsługi logowania, rejestracji i notatek.</li>
+            <li><strong>base.py</strong> – plik odpowiedzialny za obsługę połączenia z bazą danych MySQL oraz operacje CRUD (tworzenie, odczyt, aktualizacja, usuwanie) na danych.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Główne funkcje aplikacji</h2>
+        <h3>Rejestracja użytkownika</h3>
+        <p>Funkcja <code>rejestracja()</code> pozwala na zarejestrowanie nowego użytkownika, jeśli wprowadzi on poprawne dane (login i hasło) i użytkownik o takim loginie nie istnieje w bazie danych.</p>
+
+        <h3>Logowanie użytkownika</h3>
+        <p>Funkcja <code>log()</code> weryfikuje, czy wprowadzony login i hasło istnieją w bazie danych. Jeśli dane są poprawne, użytkownik zostaje zalogowany i przeniesiony do interfejsu notatnika.</p>
+
+        <h3>Dodawanie notatki</h3>
+        <p>Funkcja <code>dodawanie_notatki()</code> umożliwia użytkownikowi dodanie nowej notatki. Notatka jest zapisywana w bazie danych dla zalogowanego użytkownika.</p>
+
+        <h3>Wyświetlanie notatek</h3>
+        <p>Funkcja <code>wyswietlanie()</code> odpowiada za wyświetlanie listy wszystkich notatek należących do aktualnie zalogowanego użytkownika w interfejsie użytkownika. Lista jest odświeżana po każdej operacji.</p>
+
+        <h3>Usuwanie notatki</h3>
+        <p>Funkcja <code>usuwanie_notatki()</code> pozwala na usunięcie wybranej notatki z bazy danych oraz z listy notatek wyświetlanych w interfejsie.</p>
+
+        <h3>Wylogowanie</h3>
+        <p>Funkcja <code>wylogowywanie()</code> pozwala użytkownikowi na wylogowanie się z aplikacji i powrót do ekranu logowania.</p>
+    </div>
+
+    <div class="section">
+        <h2>Baza danych</h2>
+        <p>Aplikacja wykorzystuje MySQL do zarządzania danymi użytkowników oraz notatkami. Baza danych zawiera dwie główne tabele:</p>
+        <ul>
+            <li><strong>uzytkownik</strong> – zawiera informacje o użytkownikach (login i hasło).</li>
+            <li><strong>notatka</strong> – przechowuje treść notatek, powiązane identyfikatory użytkowników oraz znacznik czasu utworzenia notatki.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Struktura tabel</h2>
+        <h3>Tabela <code>uzytkownik</code></h3>
+        <pre>
+CREATE TABLE IF NOT EXISTS uzytkownik (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    login VARCHAR(255) UNIQUE NOT NULL,
+    pass VARCHAR(255) NOT NULL
+);
+        </pre>
+
+        <h3>Tabela <code>notatka</code></h3>
+        <pre>
+CREATE TABLE IF NOT EXISTS notatka (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tresc TEXT NOT NULL,
+    user_id INT,
+    FOREIGN KEY (user_id) REFERENCES uzytkownik(id) ON DELETE CASCADE,
+    time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+        </pre>
+    </div>
+
+    <div class="section">
+        <h2>Opis pliku <code>base.py</code></h2>
+        <p>Plik <code>base.py</code> zawiera klasę <code>Database</code>, która odpowiada za obsługę bazy danych. Główne funkcje to:</p>
+        <ul>
+            <li><strong>create_tables()</strong> – tworzy tabele <code>uzytkownik</code> i <code>notatka</code>, jeśli jeszcze nie istnieją.</li>
+            <li><strong>sprawdzanie()</strong> – sprawdza, czy istnieje użytkownik z danym loginem i hasłem.</li>
+            <li><strong>wpisz_uzytkownika()</strong> – dodaje nowego użytkownika do bazy danych.</li>
+            <li><strong>get_uzytkownik_id()</strong> – pobiera identyfikator użytkownika na podstawie loginu.</li>
+            <li><strong>wypisz_notatki_uzytkownika()</strong> – zwraca wszystkie notatki należące do danego użytkownika.</li>
+            <li><strong>wpisz_notatka()</strong> – dodaje nową notatkę do bazy danych.</li>
+            <li><strong>usun_notatka()</strong> – usuwa notatkę na podstawie jej identyfikatora.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Podsumowanie</h2>
+        <p>Aplikacja <strong>Notatnik</strong> zapewnia użytkownikom możliwość rejestracji, logowania oraz zarządzania ich notatkami. Dzięki integracji z bazą danych MySQL, dane użytkowników i notatki są bezpiecznie przechowywane, a interfejs graficzny oparty na <code>Tkinter</code> zapewnia intuicyjną obsługę.</p>
+    </div>
+</body>
+</html>
