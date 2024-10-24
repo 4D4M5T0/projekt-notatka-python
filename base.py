@@ -46,14 +46,14 @@ class Database:
             self.conn = None
 
     def sprawdzanie(self, login, password):
-        query = "SELECT * FROM uzytkownik WHERE login = %s AND pass = %s"
+        query = "SELECT * FROM uzytkownik WHERE login = %s AND pass = md5(%s)"
         self.cursor.execute(query, (login, password))
         user = self.cursor.fetchone()
         return user
 
     def wpisz_uzytkownika(self, login, password):
         try:
-            query = "INSERT INTO uzytkownik (login, pass) VALUES (%s, %s)"
+            query = "INSERT INTO uzytkownik (login, pass) VALUES (%s, md5(%s))"
             self.cursor.execute(query, (login, password))
             self.conn.commit()
         except mysql.connector.IntegrityError:
