@@ -32,7 +32,7 @@ class Database:
             self.cursor.execute("""
                 CREATE TABLE IF NOT EXISTS notatka (
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    tresc TEXT NOT NULL,
+                    text TEXT NOT NULL,
                     user_id INT,
                     FOREIGN KEY (user_id) REFERENCES uzytkownik(id) ON DELETE CASCADE,
                     time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -72,9 +72,9 @@ class Database:
         notatki = self.cursor.fetchall()
         return notatki
 
-    def wpisz_notatka(self, zawartosc, user_id):
-        query = "INSERT INTO notatka (zawartosc, user_id) VALUES (%s, %s)"
-        self.cursor.execute(query, (zawartosc, user_id))
+    def wpisz_notatka(self, text, user_id):
+        query = "INSERT INTO notatka (text, user_id) VALUES (%s, %s)"
+        self.cursor.execute(query, (text, user_id))
         self.conn.commit()
 
     def usun_notatka(self, notatka_id):
