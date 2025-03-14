@@ -13,38 +13,44 @@ root.iconphoto(False, ikona)
 
 
 class Main:
-    def __init__(self):
+    def __init__(self, root=None):
+        self.root = root if root else tk.Tk()
+        self.root.title("Notatka")
+        self.base = base
         self.okno_logowania()
 
     def rejestracja(self):
-        login = self.login_entry.get().strip()
-        password = self.has_entry.get().strip()
+        login = self.login_entry.get()
+        haslo = self.has_entry.get()
 
-        if login and password:
-            if base.sprawdzanie(login, password):
-                messagebox.showerror(title="Error", message="Użytkownik już istnieje")
-            else:
-                base.wpisz_uzytkownika(login, password)
-                self.otwieranie_notatki(login)
-        else:
-            messagebox.showerror(title="Error", message="Wpisz login i hasło")
-
-    def log(self):
-        login = self.login_entry.get().strip()
-        password = self.has_entry.get().strip()
-
-        user = base.sprawdzanie(login, password)
-
-        if user:
+        if self.base.sprawdzanie(login, haslo) is None:
+            print(f"Rejestracja użytkownika: {login}")  # Debug
+            self.base.wpisz_uzytkownika(login, haslo)
             self.otwieranie_notatki(login)
         else:
+            print("Użytkownik już istnieje")  # Debug
+            messagebox.showerror(title="Error", message="Użytkownik już istnieje")
+
+    def log(self):
+        login = self.login_entry.get()
+        haslo = self.has_entry.get()
+
+        user = self.base.sprawdzanie(login, haslo)
+
+        if user:
+            print(f"Logowanie udane dla użytkownika: {login}")
+            self.otwieranie_notatki(login)
+        else:
+            print("Błędne dane logowania")  # Debug
             messagebox.showerror(title="Error", message="Błędny login lub hasło")
 
     def otwieranie_notatki(self, login):
-        self.login_frame.destroy()
+        print(f"Otwieranie notatnika dla: {login}")  # Debug
+        for widget in self.root.winfo_children():
+            widget.destroy()
 
-        notatnik_frame = tk.Frame(root, bg="#f0f0f0")
-        notatnik_frame.pack(pady=20)
+        notatnik_frame = tk.Frame(self.root, bg="#f0f0f0")
+        notatnik_frame.pack()
 
         tk.Label(notatnik_frame, text=f"Witaj, {login}", font=("Arial", 20, "bold"), bg="#f0f0f0").pack(pady=10)
 
@@ -97,7 +103,7 @@ class Main:
                 self.wyswietlanie(notatki_listbox, login)
 
     def okno_logowania(self):
-        self.login_frame = tk.Frame(root, bg="#f0f0f0")
+        self.login_frame = tk.Frame(self.root, bg="#f0f0f0")
         self.login_frame.pack(pady=20)
 
         self.login_entry = ttk.Entry(self.login_frame)

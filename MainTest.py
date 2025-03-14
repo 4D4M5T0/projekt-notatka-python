@@ -4,22 +4,19 @@ import tkinter as tk
 from base import Database
 from main import Main
 
-
 class TestMain(unittest.TestCase):
-
-    @patch("tkinter.Tk")
-    def setUp(self, mock_tk):
+    def setUp(self):
         self.mock_root = MagicMock()
-        mock_tk.return_value = self.mock_root
-
-        self.mock_db = MagicMock(spec=Database)
-        self.app = Main()
+        self.mock_db = MagicMock()
+        self.app = Main(self.mock_root)
         self.app.base = self.mock_db
+
+
+        self.app.login_entry = MagicMock()
+        self.app.has_entry = MagicMock()
 
     @patch("tkinter.messagebox.showerror")
     def test_logowanie_poprawne(self, mock_messagebox):
-        self.app.login_entry = MagicMock()
-        self.app.has_entry = MagicMock()
         self.app.login_entry.get.return_value = "test_user"
         self.app.has_entry.get.return_value = "password"
 
@@ -32,8 +29,6 @@ class TestMain(unittest.TestCase):
 
     @patch("tkinter.messagebox.showerror")
     def test_logowanie_niepoprawne(self, mock_messagebox):
-        self.app.login_entry = MagicMock()
-        self.app.has_entry = MagicMock()
         self.app.login_entry.get.return_value = "test_user"
         self.app.has_entry.get.return_value = "wrong_password"
 
@@ -44,8 +39,6 @@ class TestMain(unittest.TestCase):
 
     @patch("tkinter.messagebox.showerror")
     def test_rejestracja_nowy_uzytkownik(self, mock_messagebox):
-        self.app.login_entry = MagicMock()
-        self.app.has_entry = MagicMock()
         self.app.login_entry.get.return_value = "new_user"
         self.app.has_entry.get.return_value = "password"
 
@@ -59,8 +52,6 @@ class TestMain(unittest.TestCase):
 
     @patch("tkinter.messagebox.showerror")
     def test_rejestracja_istniejacy_uzytkownik(self, mock_messagebox):
-        self.app.login_entry = MagicMock()
-        self.app.has_entry = MagicMock()
         self.app.login_entry.get.return_value = "existing_user"
         self.app.has_entry.get.return_value = "password"
 
@@ -70,59 +61,64 @@ class TestMain(unittest.TestCase):
         self.mock_db.wpisz_uzytkownika.assert_not_called()
         mock_messagebox.assert_called_once_with(title="Error", message="Użytkownik już istnieje")
 
+    def test_wylogowywanie(self):
+        mock_frame = MagicMock()
+
+        with patch.object(self.app, "okno_logowania") as mock_logowanie:
+            self.app.wylogowywanie(mock_frame)
+
+            mock_frame.destroy.assert_called_once()
+
+            mock_logowanie.assert_called_once()
+
+        print("Udane wylogowanie")
+
     def test_dodawanie_notatki(self):
-        self.app.notatka_entry = MagicMock()
-        self.app.notatka_entry.get.return_value = "Nowa notatka"
+        self.app.login_entry.get.return_value = "test_user"
 
-        self.app.wyswietlanie = MagicMock()
+        self.mock_db.get_uzytkownik_id.return_value = 1
+        self.mock_db.wpisz_notatka = MagicMock()
 
-        self.mock_db.get_uzytkownik_id.return_value = 42
-        self.mock_db.wpisz_notatka.return_value = None
+        notatka_entry = MagicMock()
+        notatka_entry.get.return_value = "Nowa notatka"
 
-        self.app.dodawanie_notatki(self.app.notatka_entry, "test_user", MagicMock())
+        notatki_listbox = MagicMock()
 
-        self.mock_db.wpisz_notatka.assert_called_once_with("Nowa notatka", 42)
-        self.app.notatka_entry.delete.assert_called_once_with("1.0", tk.END)
+        self.app.dodawanie_notatki(notatka_entry, "test_user", notatki_listbox)
+
+        self.mock_db.wpisz_notatka.assert_called_once_with("Nowa notatka", 1)
+        notatka_entry.delete.assert_called_once_with("1.0", tk.END)
 
     def test_usuwanie_notatki(self):
+        self.app.login_entry.get.return_value = "test_user"
+
+        self.mock_db.get_uzytkownik_id.return_value = 1
+        self.mock_db.wypisz_notatki_uzytkownika.return_value = [(1, "Stara notatka")]
+
+        self.mock_db.usun_notatka = MagicMock()
+
+        notatka_entry = MagicMock()
         notatki_listbox = MagicMock()
         notatki_listbox.curselection.return_value = [0]
 
-        self.app.notatka_entry = MagicMock()
-        self.app.wyswietlanie = MagicMock()
-
-        self.mock_db.get_uzytkownik_id.return_value = 42
-        self.mock_db.wypisz_notatki_uzytkownika.return_value = [(1, "Testowa notatka", 42)]
-        self.mock_db.usun_notatka.return_value = None
-
-        self.app.usuwanie_notatki(notatki_listbox, self.app.notatka_entry, "test_user")
+        self.app.usuwanie_notatki(notatki_listbox, notatka_entry, "test_user")
 
         self.mock_db.usun_notatka.assert_called_once_with(1)
-        self.app.notatka_entry.delete.assert_called_once_with("1.0", tk.END)
+        notatka_entry.delete.assert_called_once_with("1.0", tk.END)
 
-    def test_wyswietlanie(self):
+    def test_wyswietlanie_notatek(self):
+        self.app.login_entry.get.return_value = "test_user"
+
+        self.mock_db.get_uzytkownik_id.return_value = 1
+        self.mock_db.wypisz_notatki_uzytkownika.return_value = [(1, "Notatka1"), (2, "Notatka2")]
+
         notatki_listbox = MagicMock()
-        self.mock_db.get_uzytkownik_id.return_value = 42
-        self.mock_db.wypisz_notatki_uzytkownika.return_value = [(1, "Notatka 1", 42), (2, "Notatka 2", 42)]
 
         self.app.wyswietlanie(notatki_listbox, "test_user")
 
         notatki_listbox.delete.assert_called_once_with(0, tk.END)
-        notatki_listbox.insert.assert_any_call(tk.END, "Notatka 1")
-        notatki_listbox.insert.assert_any_call(tk.END, "Notatka 2")
-
-    @patch("tkinter.Frame.destroy")
-    def test_wylogowywanie(self, mock_destroy):
-        mock_frame = MagicMock()
-        self.app.okno_logowania = MagicMock()
-
-        self.app.wylogowywanie(mock_frame)
-
-        mock_destroy.assert_called_once()
-        self.app.okno_logowania.assert_called_once()
-
-    def tearDown(self):
-        self.app.base = None
+        notatki_listbox.insert.assert_any_call(tk.END, "Notatka1")
+        notatki_listbox.insert.assert_any_call(tk.END, "Notatka2")
 
 
 if __name__ == "__main__":
