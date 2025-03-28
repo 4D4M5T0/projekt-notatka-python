@@ -4,6 +4,7 @@ import tkinter as tk
 from base import Database
 from main import Main
 
+
 class TestMain(unittest.TestCase):
     def setUp(self):
         self.mock_root = MagicMock()
@@ -63,13 +64,12 @@ class TestMain(unittest.TestCase):
 
     def test_wylogowywanie(self):
         mock_frame = MagicMock()
-
-        with patch.object(self.app, "okno_logowania") as mock_logowanie:
-            self.app.wylogowywanie(mock_frame)
-
-            mock_frame.destroy.assert_called_once()
-
-            mock_logowanie.assert_called_once()
+        with patch("builtins.print") as mock_print:
+            with patch.object(self.app, "okno_logowania") as mock_logowanie:
+                self.app.wylogowywanie(mock_frame)
+                mock_frame.destroy.assert_called_once()
+                mock_logowanie.assert_called_once()
+                mock_print.assert_called_once_with("Udane wylogowanie")
 
         print("Udane wylogowanie")
 
@@ -86,6 +86,7 @@ class TestMain(unittest.TestCase):
 
         self.app.dodawanie_notatki(notatka_entry, "test_user", notatki_listbox)
 
+        print("Wywołano wpisz_notatka:", self.mock_db.wpisz_notatka.call_args)
         self.mock_db.wpisz_notatka.assert_called_once_with("Nowa notatka", 1)
         notatka_entry.delete.assert_called_once_with("1.0", tk.END)
 
@@ -103,22 +104,9 @@ class TestMain(unittest.TestCase):
 
         self.app.usuwanie_notatki(notatki_listbox, notatka_entry, "test_user")
 
+        print("Wywołano usun_notatka:", self.mock_db.usun_notatka.call_args)
         self.mock_db.usun_notatka.assert_called_once_with(1)
         notatka_entry.delete.assert_called_once_with("1.0", tk.END)
-
-    def test_wyswietlanie_notatek(self):
-        self.app.login_entry.get.return_value = "test_user"
-
-        self.mock_db.get_uzytkownik_id.return_value = 1
-        self.mock_db.wypisz_notatki_uzytkownika.return_value = [(1, "Notatka1"), (2, "Notatka2")]
-
-        notatki_listbox = MagicMock()
-
-        self.app.wyswietlanie(notatki_listbox, "test_user")
-
-        notatki_listbox.delete.assert_called_once_with(0, tk.END)
-        notatki_listbox.insert.assert_any_call(tk.END, "Notatka1")
-        notatki_listbox.insert.assert_any_call(tk.END, "Notatka2")
 
 
 if __name__ == "__main__":

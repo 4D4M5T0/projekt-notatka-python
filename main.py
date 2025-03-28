@@ -73,34 +73,40 @@ class Main:
 
     def dodawanie_notatki(self, notatka_entry, login, notatki_listbox):
         text = notatka_entry.get("1.0", tk.END).strip()
-        if text:
-            user_id = base.get_uzytkownik_id(login)
-            base.wpisz_notatka(text, user_id)
+        if text:  # Sprawdź, czy text nie jest pusty
+            user_id = self.base.get_uzytkownik_id(login)
+            self.base.wpisz_notatka(text, user_id)  # Powinno się wykonać
             notatka_entry.delete("1.0", tk.END)
             self.wyswietlanie(notatki_listbox, login)
+        else:
+            print("Pusta notatka, brak zapisu!")
 
     def wyswietlanie(self, notatki_listbox, login):
         notatki_listbox.delete(0, tk.END)
         user_id = base.get_uzytkownik_id(login)
         notatki = base.wypisz_notatki_uzytkownika(user_id)
         for notatka in notatki:
-            notatki_listbox.insert(tk.END, notatka[1])
+            notatki_listbox.insert(tk.END, notatka)
 
     def wylogowywanie(self, notatnik_frame):
         notatnik_frame.destroy()
         self.okno_logowania()
+        print("Udane wylogowanie")
 
     def usuwanie_notatki(self, notatki_listbox, notatka_entry, login):
         selected_index = notatki_listbox.curselection()
         if selected_index:
             selected_index = selected_index[0]
-            user_id = base.get_uzytkownik_id(login)
-            notatki = base.wypisz_notatki_uzytkownika(user_id)
+            user_id = self.base.get_uzytkownik_id(login)
+            notatki = self.base.wypisz_notatki_uzytkownika(user_id)
             if selected_index < len(notatki):
                 notatka_id = notatki[selected_index][0]
-                base.usun_notatka(notatka_id)
+                print(f"Usuwanie notatki ID: {notatka_id}")  # Debugging
+                self.base.usun_notatka(notatka_id)  # Powinno się wykonać
                 notatka_entry.delete("1.0", tk.END)
                 self.wyswietlanie(notatki_listbox, login)
+        else:
+            print("Nie wybrano notatki do usunięcia!")
 
     def okno_logowania(self):
         self.login_frame = tk.Frame(self.root, bg="#f0f0f0")
