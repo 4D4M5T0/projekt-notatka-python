@@ -5,18 +5,14 @@ from base import Database  # Zakładam, że masz plik database.py
 
 class TestDatabase(unittest.TestCase):
     def setUp(self):
-        # Tworzymy mock połączenia i kursora
         self.mock_conn = MagicMock()
         self.mock_cursor = MagicMock()
         self.mock_conn.cursor.return_value = self.mock_cursor
 
-        # Tworzymy instancję Database z fałszywymi danymi
         self.db = Database(host="localhost", user="test_user", password="test_pass", database="test_db")
 
-        # Podmieniamy prawdziwe połączenie na mock
         self.db.conn = self.mock_conn
 
-        # Resetujemy mock przed każdym testem
         self.mock_cursor.reset_mock()
 
     def test_sprawdzanie(self):
