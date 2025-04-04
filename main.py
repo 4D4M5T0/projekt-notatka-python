@@ -20,32 +20,36 @@ class Main:
         self.okno_logowania()
 
     def rejestracja(self):
-        login = self.login_entry.get()
-        haslo = self.has_entry.get()
+        login = self.login_entry.get().strip()
+        haslo = self.has_entry.get().strip()
+
+        if not login or not haslo:
+            messagebox.showerror(title="Error", message="Pola nie mogą być puste")
+            return
 
         if self.base.sprawdzanie(login, haslo) is None:
-            print(f"Rejestracja użytkownika: {login}")  # Debug
+            print(f"Rejestracja użytkownika: {login}")
             self.base.wpisz_uzytkownika(login, haslo)
             self.otwieranie_notatki(login)
         else:
-            print("Użytkownik już istnieje")  # Debug
+            print("Użytkownik już istnieje")
             messagebox.showerror(title="Error", message="Użytkownik już istnieje")
 
     def log(self):
         login = self.login_entry.get()
         haslo = self.has_entry.get()
 
-        user = self.base.sprawdzanie(login, haslo)
+        if not login or not haslo:
+            messagebox.showerror(title="Error", message="Pola nie mogą być puste")
+            return
 
-        if user:
-            print(f"Logowanie udane dla użytkownika: {login}")
+        if self.base.sprawdzanie(login, haslo) is not None:
             self.otwieranie_notatki(login)
         else:
-            print("Błędne dane logowania")  # Debug
             messagebox.showerror(title="Error", message="Błędny login lub hasło")
 
     def otwieranie_notatki(self, login):
-        print(f"Otwieranie notatnika dla: {login}")  # Debug
+        print(f"Otwieranie notatnika dla: {login}")
         for widget in self.root.winfo_children():
             widget.destroy()
 
@@ -73,9 +77,10 @@ class Main:
 
     def dodawanie_notatki(self, notatka_entry, login, notatki_listbox):
         text = notatka_entry.get("1.0", tk.END).strip()
-        if text:  # Sprawdź, czy text nie jest pusty
+        if text:
             user_id = self.base.get_uzytkownik_id(login)
-            self.base.wpisz_notatka(text, user_id)  # Powinno się wykonać
+            self.base.wpisz_notatka(text, user_id)
+            print(f"Dodano notatkę: {text}")
             notatka_entry.delete("1.0", tk.END)
             self.wyswietlanie(notatki_listbox, login)
         else:
@@ -95,18 +100,20 @@ class Main:
 
     def usuwanie_notatki(self, notatki_listbox, notatka_entry, login):
         selected_index = notatki_listbox.curselection()
-        if selected_index:
-            selected_index = selected_index[0]
-            user_id = self.base.get_uzytkownik_id(login)
-            notatki = self.base.wypisz_notatki_uzytkownika(user_id)
-            if selected_index < len(notatki):
-                notatka_id = notatki[selected_index][0]
-                print(f"Usuwanie notatki ID: {notatka_id}")  # Debugging
-                self.base.usun_notatka(notatka_id)  # Powinno się wykonać
-                notatka_entry.delete("1.0", tk.END)
-                self.wyswietlanie(notatki_listbox, login)
-        else:
-            print("Nie wybrano notatki do usunięcia!")
+        if not selected_index:
+            messagebox.showerror(title="Error", message="Nie wybrano notatki do usunięcia")  # 🔹 Teraz test przejdzie!
+            return
+
+        selected_index = selected_index[0]
+        user_id = self.base.get_uzytkownik_id(login)
+        notatki = self.base.wypisz_notatki_uzytkownika(user_id)
+
+        if selected_index < len(notatki):
+            notatka_id = notatki[selected_index][0]
+            print(f"Usuwanie notatki ID: {notatka_id}")
+            self.base.usun_notatka(notatka_id)
+            notatka_entry.delete("1.0", tk.END)
+            self.wyswietlanie(notatki_listbox, login)
 
     def okno_logowania(self):
         self.login_frame = tk.Frame(self.root, bg="#f0f0f0")
