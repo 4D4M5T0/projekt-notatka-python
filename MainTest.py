@@ -19,21 +19,20 @@ class TestMain(unittest.TestCase):
         self.mock_db = None
         self.app = None
 
-    @patch("tkinter.messagebox.showerror")
-    def test_logowanie(self, mock_messagebox):
-        # Ustawienie poprawnych danych logowania
+    @patch("builtins.print")
+    def test_logowanie(self, mock_print):
         self.app.login_entry.get.return_value = "test_user"
         self.app.has_entry.get.return_value = "password"
 
         self.mock_db.sprawdzanie.return_value = (1, "test_user", "hashed_password")
 
         with patch.object(self.app, "otwieranie_notatki") as mock_otwieranie:
-            self.app.log()  # Wywołanie logowania
+            self.app.log()
             mock_otwieranie.assert_called_once_with("test_user")
-            mock_messagebox.assert_not_called()
+            mock_print.assert_called_once_with("Zalogowano jako test_user")
 
-    @patch("tkinter.messagebox.showerror")
-    def test_rejestracja(self, mock_messagebox):
+    @patch("builtins.print")
+    def test_rejestracja(self, mock_print):
         self.app.login_entry.get.return_value = "new_user"
         self.app.has_entry.get.return_value = "password"
 
@@ -43,14 +42,17 @@ class TestMain(unittest.TestCase):
             self.app.rejestracja()
             self.mock_db.wpisz_uzytkownika.assert_called_once_with("new_user", "password")
             mock_otwieranie.assert_called_once_with("new_user")
-            mock_messagebox.assert_not_called()
+            mock_print.assert_called_once_with("Rejestracja użytkownika: new_user")
 
-    def test_wylogowywanie(self):
+    @patch("builtins.print")
+    def test_wylogowywanie(self, mock_print):
         mock_frame = MagicMock()
         with patch.object(self.app, "okno_logowania") as mock_logowanie:
             self.app.wylogowywanie(mock_frame)
             mock_frame.destroy.assert_called_once()
             mock_logowanie.assert_called_once()
+            mock_print.assert_called_once_with("Udane wylogowanie")
+
 
 if __name__ == "__main__":
     unittest.main()

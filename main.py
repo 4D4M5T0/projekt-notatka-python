@@ -35,18 +35,19 @@ class Main:
             print("Użytkownik już istnieje")
             messagebox.showerror(title="Error", message="Użytkownik już istnieje")
 
+
     def log(self):
         login = self.login_entry.get()
         haslo = self.has_entry.get()
 
-        if not login or not haslo:
-            messagebox.showerror(title="Error", message="Pola nie mogą być puste")
-            return
+        wynik = self.base.sprawdzanie(login, haslo)
 
-        if self.base.sprawdzanie(login, haslo) is not None:
-            self.otwieranie_notatki(login)
+        if wynik:
+            user_id, user_name, user_password = wynik
+            self.otwieranie_notatki(user_name)
+            print(f"Zalogowano jako {user_name}")
         else:
-            messagebox.showerror(title="Error", message="Błędny login lub hasło")
+            print("Błąd logowania: Nieprawidłowy login lub hasło")
 
     def otwieranie_notatki(self, login):
         print(f"Otwieranie notatnika dla: {login}")
